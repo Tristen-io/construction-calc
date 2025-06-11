@@ -1,39 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Concrete Calculators</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
     }
+
     .container {
-      max-width: 500px;
-      margin: 0 auto;
+      background: white;
+      margin-top: 30px;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      max-width: 520px;
+      width: 90%;
     }
-    input, button, select {
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    label {
+      font-weight: 600;
+      margin-top: 10px;
+      display: block;
+      color: #444;
+    }
+
+    input, select, button {
       width: 100%;
       padding: 10px;
-      margin: 10px 0;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
       font-size: 1rem;
     }
+
+    input:focus, select:focus, button:focus {
+      border-color: #007bff;
+      outline: none;
+    }
+
     .row {
       display: flex;
       gap: 10px;
     }
+
     .row input {
       flex: 1;
     }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
     .result {
-      font-weight: bold;
+      background: #f0f8ff;
+      border-left: 5px solid #007bff;
+      padding: 10px 15px;
+      font-weight: 600;
+      color: #333;
       margin-top: 15px;
       white-space: pre-line;
     }
+
     .calculator-section {
       display: none;
     }
+
     .calculator-section.active {
       display: block;
     }
