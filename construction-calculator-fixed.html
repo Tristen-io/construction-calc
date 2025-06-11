@@ -1,0 +1,151 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Construction Calculator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
+    .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); max-width: 700px; margin: auto; }
+    h2, h3 { text-align: center; }
+    label { font-weight: bold; margin-top: 10px; display: block; }
+    input, select, button { width: 100%; padding: 10px; margin: 6px 0; border: 1px solid #ccc; border-radius: 5px; }
+    .row { display: flex; gap: 10px; }
+    .row input { flex: 1; }
+    .buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    button { background-color: #007bff; color: white; border: none; cursor: pointer; }
+    button:hover { background-color: #0056b3; }
+    .result { background: #f0f8ff; border-left: 5px solid #007bff; padding: 10px; margin-top: 15px; white-space: pre-line; font-weight: bold; }
+    .section { display: none; }
+    .section.active { display: block; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Construction Calculator</h2>
+    <label for="calcType">Select Calculator:</label>
+    <select id="calcType" onchange="switchCalc()">
+      <option value="slab">Concrete Slab</option>
+      <option value="circle">Circular Slab</option>
+      <option value="footing">Footings</option>
+      <option value="wall">Wall</option>
+      <option value="ramp">Ramp</option>
+      <option value="mulch">Mulch</option>
+    </select>
+
+    <div id="formArea"></div>
+
+    <div class="buttons">
+      <button onclick="calculate()">Calculate</button>
+      <button onclick="resetForm()">Reset</button>
+      <button onclick="exportToPDF()">Export to PDF</button>
+    </div>
+
+    <div class="result" id="resultBox">Result will appear here.</div>
+  </div>
+
+  <script>
+    const calcTypes = {
+      slab: { label: "Concrete Slab", inputs: [["Length", true], ["Width", true], ["Thickness (inches)"], ["Cost per Cubic Yard ($)"]] },
+      circle: { label: "Circular Slab", inputs: [["Radius (feet)"], ["Thickness (inches)"], ["Cost per Cubic Yard ($)"]] },
+      footing: { label: "Footings", inputs: [["Total Length", true], ["Width (inches)"], ["Depth (inches)"], ["Cost per Cubic Yard ($)"]] },
+      wall: { label: "Wall", inputs: [["Length", true], ["Height", true], ["Thickness (inches)"], ["Cost per Cubic Yard ($)"]] },
+      ramp: { label: "Ramp", inputs: [["Length", true], ["Width", true], ["Start Thickness (inches)"], ["End Thickness (inches)"], ["Cost per Cubic Yard ($)"]] },
+      mulch: { label: "Mulch", inputs: [["Length", true], ["Width", true], ["Depth (inches)"], ["Cost per Cubic Foot ($)"]] }
+    };
+
+    let currentType = "slab";
+
+    function switchCalc() {
+      currentType = document.getElementById("calcType").value;
+      const form = document.getElementById("formArea");
+      const config = calcTypes[currentType];
+      form.innerHTML = `<h3>${config.label}</h3>`;
+      config.inputs.forEach(([label, isFeetInches], index) => {
+        const id = `input${index}`;
+        if (isFeetInches) {
+          form.innerHTML += `<label>${label}:</label><div class="row"><input type="number" id="${id}_ft" placeholder="Feet"><input type="number" id="${id}_in" placeholder="Inches"></div>`;
+        } else {
+          form.innerHTML += `<label>${label}:</label><input type="number" id="${id}">`;
+        }
+      });
+    }
+
+    function toFeet(feet, inches) {
+      return (parseFloat(feet) || 0) + (parseFloat(inches) || 0) / 12;
+    }
+
+    function getInput(index, isFeetInches = false) {
+      if (isFeetInches) {
+        return toFeet(document.getElementById(`input${index}_ft`).value, document.getElementById(`input${index}_in`).value);
+      }
+      return parseFloat(document.getElementById(`input${index}`).value) || 0;
+    }
+
+    function calculate() {
+      let vol = 0, cost = 0, result = "";
+      switch (currentType) {
+        case "slab":
+          const l = getInput(0, true), w = getInput(1, true), t = getInput(2) / 12, c = getInput(3);
+          vol = (l * w * t) / 27; result = `Concrete Slab:
+Volume: ${vol.toFixed(2)} yd³
+With 10% Overage: ${(vol * 1.1).toFixed(2)} yd³`;
+          if (c) result += `
+Cost: $${(vol * 1.1 * c).toFixed(2)}`; break;
+        case "circle":
+          const r = getInput(0), t2 = getInput(1) / 12, c2 = getInput(2);
+          vol = (Math.PI * r * r * t2) / 27; result = `Circular Slab:
+Volume: ${vol.toFixed(2)} yd³
+With 10% Overage: ${(vol * 1.1).toFixed(2)} yd³`;
+          if (c2) result += `
+Cost: $${(vol * 1.1 * c2).toFixed(2)}`; break;
+        case "footing":
+          const lf = getInput(0, true), wf = getInput(1) / 12, df = getInput(2) / 12, cf = getInput(3);
+          vol = (lf * wf * df) / 27; result = `Footings:
+Volume: ${vol.toFixed(2)} yd³
+With 10% Overage: ${(vol * 1.1).toFixed(2)} yd³`;
+          if (cf) result += `
+Cost: $${(vol * 1.1 * cf).toFixed(2)}`; break;
+        case "wall":
+          const lw = getInput(0, true), hw = getInput(1, true), tw = getInput(2) / 12, cw = getInput(3);
+          vol = (lw * hw * tw) / 27; result = `Wall:
+Volume: ${vol.toFixed(2)} yd³
+With 10% Overage: ${(vol * 1.1).toFixed(2)} yd³`;
+          if (cw) result += `
+Cost: $${(vol * 1.1 * cw).toFixed(2)}`; break;
+        case "ramp":
+          const lr = getInput(0, true), wr = getInput(1, true), ts = getInput(2) / 12, te = getInput(3) / 12, cr = getInput(4);
+          vol = (lr * wr * ((ts + te) / 2)) / 27; result = `Ramp:
+Volume: ${vol.toFixed(2)} yd³
+With 10% Overage: ${(vol * 1.1).toFixed(2)} yd³`;
+          if (cr) result += `
+Cost: $${(vol * 1.1 * cr).toFixed(2)}`; break;
+        case "mulch":
+          const lm = getInput(0, true), wm = getInput(1, true), dm = getInput(2) / 12, cm = getInput(3);
+          const ft3 = lm * wm * dm;
+          result = `Mulch:
+Volume: ${ft3.toFixed(2)} ft³`; if (cm) result += `
+Cost: $${(ft3 * cm).toFixed(2)}`; break;
+      }
+      document.getElementById("resultBox").innerText = result;
+    }
+
+    function resetForm() {
+      document.getElementById("formArea").querySelectorAll("input").forEach(input => input.value = "");
+      document.getElementById("resultBox").innerText = "Result will appear here.";
+    }
+
+    function exportToPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.text(document.getElementById("resultBox").innerText, 10, 10);
+      const filename = prompt("Enter file name", "calculation");
+      if (filename) doc.save(`${filename}.pdf`);
+    }
+
+    switchCalc(); // Initialize default
+  </script>
+</body>
+</html>
